@@ -1,4 +1,10 @@
+package test;
+
+import data.DataHelper;
 import org.junit.jupiter.api.*;
+import page.DashboardPage;
+import page.LoginPage;
+
 import static com.codeborne.selenide.Selenide.open;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -9,7 +15,10 @@ public class TransferTest {
     @BeforeEach
     void setUp() {
         open("http://localhost:9999");
-        dashboard = new LoginPage().validLogin("vasya", "qwerty123");
+        var authInfo = DataHelper.getAuthInfo();
+        var verificationPage = new LoginPage().validLogin(authInfo);
+        var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
+        dashboard = verificationPage.validVerify(verificationCode);
     }
 
     @Test
@@ -21,8 +30,7 @@ public class TransferTest {
         int balanceSecondBefore = dashboard.getCardBalance("0002");
 
         dashboard.selectCardForTopUp("0002")
-                .transfer("5559 0000 0000 0001", amount);   // полный номер            // с первой
-
+                .transfer("5559 0000 0000 0001", amount);
         int balanceFirstAfter = dashboard.getCardBalance("0001");
         int balanceSecondAfter = dashboard.getCardBalance("0002");
 
@@ -49,26 +57,40 @@ public class TransferTest {
     }
 
     @Test
-    @DisplayName("Перевод суммы больше баланса")
+    @DisplayName("Перевод суммы больше баланса не должен менять балансы обеих карт")
     void shouldNotTransferMoreThanBalance() {
-        int balanceFirst = dashboard.getCardBalance("0001");
-        int tooMuch = balanceFirst + 1;
+        int balanceFirstBefore = dashboard.getCardBalance("0001");
+        int balanceSecondBefore = dashboard.getCardBalance("0002");
+        int tooMuch = balanceFirstBefore + 1;
 
         dashboard.selectCardForTopUp("0002")
                 .transferExpectingError("5559 0000 0000 0001", tooMuch);
 
-        assertEquals(balanceFirst, dashboard.getCardBalance("0001"));
+        int balanceFirstAfter = dashboard.getCardBalance("0001");
+        int balanceSecondAfter = dashboard.getCardBalance("0002");
+
+        assertEquals(balanceFirstBefore, balanceFirstAfter,
+                "Баланс карты-источника не должен меняться при отклонённом переводе");
+        assertEquals(balanceSecondBefore, balanceSecondAfter,
+                "Баланс карты-получателя не должен меняться при отклонённом переводе");
     }
 
     @Test
-    @DisplayName("Перевод на ту же карту не должен менять баланс")
+    @DisplayName("Перевод на ту же карту не должен менять балансы обеих карт")
     void shouldNotTransferToSameCard() {
-        int balanceBefore = dashboard.getCardBalance("0001");
+        int balanceFirstBefore = dashboard.getCardBalance("0001");
+        int balanceSecondBefore = dashboard.getCardBalance("0002");
 
         dashboard.selectCardForTopUp("0001")
                 .transfer("5559 0000 0000 0001", 100);
 
-        assertEquals(balanceBefore, dashboard.getCardBalance("0001"));
+        int balanceFirstAfter = dashboard.getCardBalance("0001");
+        int balanceSecondAfter = dashboard.getCardBalance("0002");
+
+        assertEquals(balanceFirstBefore, balanceFirstAfter,
+                "Баланс карты не должен меняться при переводе на саму себя");
+        assertEquals(balanceSecondBefore, balanceSecondAfter,
+                "Баланс второй карты не должен меняться при переводе на ту же карту");
     }
 
     @Test

@@ -1,5 +1,9 @@
+package page;
+
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import org.openqa.selenium.Keys;
+
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.page;
@@ -16,20 +20,19 @@ public class TransferPage {
     }
 
     public DashboardPage transfer(String fromCardNumber, int amount) {
-        fromCardField.shouldBe(visible).setValue(fromCardNumber);
-        amountField.setValue(String.valueOf(amount));
-        transferButton.click();
+        fillAndSubmit(fromCardNumber, amount);
         return page(DashboardPage.class);
     }
 
-    /**
-     * Перевод с ожиданием ошибки (для негативных кейсов).
-     */
     public TransferPage transferExpectingError(String fromCardNumber, int amount) {
-        fromCardField.shouldBe(visible).setValue(fromCardNumber);
-        amountField.setValue(String.valueOf(amount));
-        transferButton.click();
+        fillAndSubmit(fromCardNumber, amount);
         errorMessage.shouldBe(visible);
         return this;
+    }
+
+    private void fillAndSubmit(String fromCardNumber, int amount) {
+        fromCardField.shouldBe(visible).setValue(fromCardNumber);
+        amountField.press(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE).setValue(String.valueOf(amount));
+        transferButton.click();
     }
 }
