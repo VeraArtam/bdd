@@ -1,6 +1,5 @@
 package page;
 
-import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
 import org.openqa.selenium.Keys;
 
@@ -31,7 +30,7 @@ public class TransferPage {
     }
 
     private void fillAndSubmit(String fromCardNumber, int amount) {
-        fromCardField.shouldBe(visible).setValue(fromCardNumber);
+        fromCardField.shouldBe(visible).press(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE).setValue(fromCardNumber);
         amountField.press(Keys.chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE).setValue(String.valueOf(amount));
         transferButton.click();
     }
